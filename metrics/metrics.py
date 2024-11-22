@@ -460,8 +460,33 @@ class PrefectMetrics(object):
         """
         A method to gather low cardinality metrics
         """
-        # yield []
-        return []
+        # pull required objects out of the data object
+        all_flow_runs = data.get("all_flow_runs")
+
+        prefect_flow_state_counts = CounterMetricFamily(
+            "prefect_flow_state_counts",
+            "Total quantity of prefect flows in a given state",
+            labels=["state"],
+        )
+
+        state_counts = {
+            "Failed": 0,
+            "Crashed": 0,
+            "Running": 0,
+            "Cancelled": 0,
+            "Completed": 0,
+            "Pending": 0,
+            "Scheduled": 0,
+        }
+
+        for flow_run in all_flow_runs:
+            state = flow_run["state"]["name"]
+            state_counts[state] += 1
+
+        for state, count in state_counts.items():
+            prefect_flow_state_counts.add_metric([state], count)
+
+        yield prefect_flow_state_counts
 
     def get_data(self) -> {str, any}:
         """
