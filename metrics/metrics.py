@@ -40,6 +40,10 @@ class PrefectMetrics(object):
             offset_minutes (int): Time offset in minutes.
             max_retries (int): The maximum number of retries for HTTP requests.
             logger (obj): The logger object.
+            enable_pagination (bool): Indicates if pagination is enbabled.
+            pagination_limit (int): How many records per page.
+            collect_high_cardinality (bool): Indicates if high cardinality values should be collected.
+
 
         """
         self.headers = headers
