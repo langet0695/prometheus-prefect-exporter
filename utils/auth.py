@@ -2,12 +2,15 @@ import base64
 
 
 class Authorization:
-    def __init__(self, api_key, api_user, api_password):
+    def __init__(
+        self, api_key: str, api_user: str, api_password: str, logger: object
+    ) -> None:
         self.api_key = api_key
         self.api_user = api_user
         self.api_password = api_password
+        self.logger = logger
 
-    def get_auth_header(self):
+    def get_auth_header(self) -> str:
         auth_type = "Unset"
         auth_value = ""
         if self.api_key:
@@ -18,5 +21,5 @@ class Authorization:
             auth_str = f"{self.api_user}:{self.api_password}"
             b64_auth_str = base64.b64encode(bytes(auth_str, "utf-8")).decode("utf-8")
             auth_value = f"Basic {b64_auth_str}"
-        # logger.info("Authorization Type: %s", auth_type)
-        return auth_value, auth_type
+        self.logger.info("Authorization Type: %s", auth_type)
+        return auth_value
