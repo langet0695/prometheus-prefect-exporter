@@ -125,17 +125,6 @@ class PrefectMetrics(object):
         A method to gather high cardinality metrics if the environment allows
         """
 
-        ##
-        # PREFECT DEPLOYMENTS METRICS
-        #
-
-        prefect_deployments = GaugeMetricFamily(
-            "prefect_deployments_total", "Prefect total deployments", labels=[]
-        )
-        self.calculator.calculate_prefect_deployments_total(prefect_deployments)
-        yield prefect_deployments
-
-        # prefect_info_deployments metric
         prefect_info_deployments = GaugeMetricFamily(
             "prefect_info_deployment",
             "Prefect deployment info",
@@ -153,52 +142,29 @@ class PrefectMetrics(object):
                 "status",
             ],
         )
-        self.calculator.calculate_prefect_info_deployments(prefect_info_deployments)
+        self.calculator.calculate_prefect_info_deployments(
+            metric=prefect_info_deployments
+        )
         yield prefect_info_deployments
 
-        ##
-        # PREFECT FLOWS METRICS
-        #
-
-        # prefect_flows metric
-        prefect_flows = GaugeMetricFamily(
-            "prefect_flows_total", "Prefect total flows", labels=[]
-        )
-        self.calculator.calculate_prefect_flows_total(prefect_flows)
-        yield prefect_flows
-
-        # prefect_info_flows metric
         prefect_info_flows = GaugeMetricFamily(
             "prefect_info_flows",
             "Prefect flow info",
             labels=["created", "flow_id", "flow_name"],
         )
-        self.calculator.calculate_prefect_info_flows(prefect_info_flows)
+        self.calculator.calculate_prefect_info_flows(metric=prefect_info_flows)
         yield prefect_info_flows
 
-        ##
-        # PREFECT FLOW RUNS METRICS
-        #
-
-        # prefect_flow_runs metric
-        prefect_flow_runs = GaugeMetricFamily(
-            "prefect_flow_runs_total", "Prefect total flow runs", labels=[]
-        )
-        self.calculator.calculate_prefect_flow_runs_total(prefect_flow_runs)
-        yield prefect_flow_runs
-
-        # prefect_flow_runs_total_run_time metric
         prefect_flow_runs_total_run_time = CounterMetricFamily(
             "prefect_flow_runs_total_run_time",
             "Prefect flow-run total run time in seconds",
             labels=["flow_id", "flow_name", "flow_run_name"],
         )
         self.calculator.calculate_prefect_flow_runs_total_run_time(
-            prefect_flow_runs_total_run_time
+            metric=prefect_flow_runs_total_run_time
         )
         yield prefect_flow_runs_total_run_time
 
-        # prefect_info_flow_runs metric
         prefect_info_flow_runs = GaugeMetricFamily(
             "prefect_info_flow_runs",
             "Prefect flow runs info",
@@ -219,21 +185,9 @@ class PrefectMetrics(object):
                 "work_queue_name",
             ],
         )
-        self.calculator.calculate_prefect_info_flow_runs(prefect_info_flow_runs)
+        self.calculator.calculate_prefect_info_flow_runs(metric=prefect_info_flow_runs)
         yield prefect_info_flow_runs
 
-        ##
-        # PREFECT WORK POOLS METRICS
-        #
-
-        # prefect_work_pools metric
-        prefect_work_pools = GaugeMetricFamily(
-            "prefect_work_pools_total", "Prefect total work pools", labels=[]
-        )
-        self.calculator.calculate_prefect_work_pools_total(prefect_work_pools)
-        yield prefect_work_pools
-
-        # prefect_info_work_pools metric
         prefect_info_work_pools = GaugeMetricFamily(
             "prefect_info_work_pools",
             "Prefect work pools info",
@@ -247,21 +201,11 @@ class PrefectMetrics(object):
                 "status",
             ],
         )
-        self.calculator.calculate_prefect_info_work_pools(prefect_info_work_pools)
+        self.calculator.calculate_prefect_info_work_pools(
+            metric=prefect_info_work_pools
+        )
         yield prefect_info_work_pools
 
-        ##
-        # PREFECT WORK QUEUES METRICS
-        #
-
-        # prefect_work_queues metric
-        prefect_work_queues = GaugeMetricFamily(
-            "prefect_work_queues_total", "Prefect total work queues", labels=[]
-        )
-        self.calculator.calculate_prefect_work_queues_total(prefect_work_queues)
-        yield prefect_work_queues
-
-        # prefect_info_work_queues metric
         prefect_info_work_queues = GaugeMetricFamily(
             "prefect_info_work_queues",
             "Prefect work queues info",
@@ -282,7 +226,9 @@ class PrefectMetrics(object):
                 "health_check_policy_maximum_seconds_since_last_polled",
             ],
         )
-        self.calculator.calculate_prefect_info_work_queues(prefect_info_work_queues)
+        self.calculator.calculate_prefect_info_work_queues(
+            metric=prefect_info_work_queues
+        )
         yield prefect_info_work_queues
 
     def build_low_cardinality_metrics(self):
@@ -290,21 +236,45 @@ class PrefectMetrics(object):
         A method to gather low cardinality metrics
         """
 
-        ##
-        # PREFECT FLOW RUN STATE METRICS
-        #
+        prefect_deployments = GaugeMetricFamily(
+            "prefect_deployments_total", "Prefect total deployments", labels=[]
+        )
+        self.calculator.calculate_prefect_deployments_total(metric=prefect_deployments)
+        yield prefect_deployments
 
-        prefect_flow_run_state_total = GaugeMetricFamily(
+        prefect_flows = GaugeMetricFamily(
+            "prefect_flows_total", "Prefect total flows", labels=[]
+        )
+        self.calculator.calculate_prefect_flows_total(metric=prefect_flows)
+        yield prefect_flows
+
+        prefect_flow_runs = GaugeMetricFamily(
+            "prefect_flow_runs_total", "Prefect total flow runs", labels=[]
+        )
+        self.calculator.calculate_prefect_flow_runs_total(metric=prefect_flow_runs)
+        yield prefect_flow_runs
+
+        prefect_work_pools = GaugeMetricFamily(
+            "prefect_work_pools_total", "Prefect total work pools", labels=[]
+        )
+        self.calculator.calculate_prefect_work_pools_total(metric=prefect_work_pools)
+        yield prefect_work_pools
+
+        prefect_work_queues = GaugeMetricFamily(
+            "prefect_work_queues_total", "Prefect total work queues", labels=[]
+        )
+        self.calculator.calculate_prefect_work_queues_total(metric=prefect_work_queues)
+        yield prefect_work_queues
+
+        prefect_flow_run_state = GaugeMetricFamily(
             "prefect_flow_run_state_total",
             "Aggregate state metrics for prefect flow runs",
             labels=["state"],
         )
-        self.calculator.calculate_flow_run_state_metrics(
-            metric=prefect_flow_run_state_total
-        )
-        yield prefect_flow_run_state_total
+        self.calculator.calculate_flow_run_state_metrics(metric=prefect_flow_run_state)
+        yield prefect_flow_run_state
 
-        prefect_flow_run_state_past_24_hours_total = GaugeMetricFamily(
+        prefect_flow_run_state_past_24_hours = GaugeMetricFamily(
             "prefect_flow_run_state_past_24_hours_total",
             "Aggregate state metrics for prefect flow runs timestamped in the past 24 hours",
             labels=["state"],
@@ -313,10 +283,10 @@ class PrefectMetrics(object):
             hours=24
         )
         self.calculator.calculate_flow_run_state_metrics(
-            metric=prefect_flow_run_state_past_24_hours_total,
+            metric=prefect_flow_run_state_past_24_hours,
             start_timestamp=start_24_hour_period_timestamp,
         )
-        yield prefect_flow_run_state_past_24_hours_total
+        yield prefect_flow_run_state_past_24_hours
 
     def get_current_data(self) -> {str, any}:
         """
