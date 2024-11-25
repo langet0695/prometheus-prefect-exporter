@@ -45,12 +45,13 @@ def metrics():
     # Configure headers for HTTP requests
     headers = {"accept": "application/json", "Content-Type": "application/json"}
 
-    # Get authorization value
-    auth_value, auth_type = Authorization(
-        api_key, api_user, api_password
+    auth_value = Authorization(
+        api_key=api_key,
+        api_user=api_user,
+        api_password=api_password,
+        logger=logger,
     ).get_auth_header()
     headers["Authorization"] = auth_value
-    logger.info("Authorization Type: %s", auth_type)
 
     # check endpoint
     PrefectHealthz(
