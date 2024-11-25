@@ -1,15 +1,16 @@
+from datetime import datetime, timezone, timedelta
+import time
+import requests
+import pendulum
+from prefect.client.schemas.objects import CsrfToken
+from prometheus_client.core import GaugeMetricFamily, CounterMetricFamily, Metric
+
 from metrics.deployments import PrefectDeployments
 from metrics.flow_runs import PrefectFlowRuns
 from metrics.flows import PrefectFlows
 from metrics.work_pools import PrefectWorkPools
 from metrics.work_queues import PrefectWorkQueues
 from metrics.calculator import MetricCalculator
-import requests
-import time
-from prefect.client.schemas.objects import CsrfToken
-import pendulum
-from prometheus_client.core import GaugeMetricFamily, CounterMetricFamily
-from datetime import datetime, timezone, timedelta
 
 
 class PrefectMetrics(object):
@@ -56,7 +57,7 @@ class PrefectMetrics(object):
         self.data = None
         self.calculator = None
 
-    def collect(self):
+    def collect(self) -> Metric:
         """
         Get and set Prefect work queues metrics.
 
@@ -112,7 +113,7 @@ class PrefectMetrics(object):
                 break
         return CsrfToken.parse_obj(csrf_token.json())
 
-    def build_high_cardinality_metrics(self):
+    def build_high_cardinality_metrics(self) -> Metric:
         """
         A method to gather high cardinality metrics if the environment allows
         """
@@ -223,7 +224,7 @@ class PrefectMetrics(object):
         )
         yield prefect_info_work_queues
 
-    def build_low_cardinality_metrics(self):
+    def build_low_cardinality_metrics(self) -> Metric:
         """
         A method to gather low cardinality metrics
         """
