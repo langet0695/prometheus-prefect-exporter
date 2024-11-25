@@ -3,6 +3,7 @@ from metrics.flow_runs import PrefectFlowRuns
 from metrics.flows import PrefectFlows
 from metrics.work_pools import PrefectWorkPools
 from metrics.work_queues import PrefectWorkQueues
+from metrics.calculator import MetricCalculator
 import requests
 import time
 from prefect.client.schemas.objects import CsrfToken
@@ -53,6 +54,7 @@ class PrefectMetrics(object):
         self.csrf_token_expiration = None
         self.collect_high_cardinality = collect_high_cardinality
         self.data = None
+        self.calculator = None
 
     def collect(self):
         """
@@ -87,6 +89,7 @@ class PrefectMetrics(object):
         # PREFECT GET RESOURCES
         #
         self.data = self.get_current_data()
+        self.calculator = MetricCalculator(self.data)
 
         ##
         # Calculate and output metrics prometheus client
@@ -471,12 +474,18 @@ class PrefectMetrics(object):
         A method to gather low cardinality metrics
         """
 
+        ##
+        # PREFECT FLOW RUN STATE METRICS
+        #
+
         prefect_flow_run_state_total = GaugeMetricFamily(
             "prefect_flow_run_state_total",
             "Aggregate state metrics for prefect flow runs",
             labels=["state"],
         )
-        self.calculate_flow_run_state_metrics(metric=prefect_flow_run_state_total)
+        self.calculator.calculate_flow_run_state_metrics(
+            metric=prefect_flow_run_state_total
+        )
         yield prefect_flow_run_state_total
 
         prefect_flow_run_state_past_24_hours_total = GaugeMetricFamily(
@@ -487,46 +496,11 @@ class PrefectMetrics(object):
         start_24_hour_period_timestamp = datetime.now(timezone.utc) - timedelta(
             hours=24
         )
-        self.calculate_flow_run_state_metrics(
+        self.calculator.calculate_flow_run_state_metrics(
             metric=prefect_flow_run_state_past_24_hours_total,
             start_timestamp=start_24_hour_period_timestamp,
         )
         yield prefect_flow_run_state_past_24_hours_total
-
-    def calculate_flow_run_state_metrics(
-        self,
-        metric,
-        start_timestamp=datetime(1970, 1, 1, tzinfo=timezone.utc),
-        end_timestamp=datetime.now(timezone.utc),
-    ) -> any:
-        # pull required objects out of the data object
-        all_flow_runs = self.data.get("all_flow_runs")
-
-        state_total = {
-            "Failed": 0,
-            "Crashed": 0,
-            "Running": 0,
-            "Cancelled": 0,
-            "Completed": 0,
-            "Pending": 0,
-            "Scheduled": 0,
-            "Late": 0,
-        }
-
-        for flow_run in all_flow_runs:
-            state = flow_run["state"]["name"]
-            timestamp = datetime.strptime(
-                flow_run["state"]["timestamp"], "%Y-%m-%dT%H:%M:%S.%f%z"
-            )
-
-            if state_total.get(state, None) is None:
-                state_total.update({state: 0})
-
-            if start_timestamp <= timestamp <= end_timestamp:
-                state_total[state] += 1
-
-        for state, total in state_total.items():
-            metric.add_metric([state], total)
 
     def get_current_data(self) -> {str, any}:
         """
