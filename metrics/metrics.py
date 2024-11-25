@@ -8,6 +8,7 @@ import time
 from prefect.client.schemas.objects import CsrfToken
 import pendulum
 from prometheus_client.core import GaugeMetricFamily, CounterMetricFamily
+from datetime import datetime, timezone, timedelta
 
 
 class PrefectMetrics(object):
@@ -51,6 +52,7 @@ class PrefectMetrics(object):
         self.csrf_token = None
         self.csrf_token_expiration = None
         self.collect_high_cardinality = collect_high_cardinality
+        self.data = None
 
     def collect(self):
         """
@@ -84,16 +86,16 @@ class PrefectMetrics(object):
         ##
         # PREFECT GET RESOURCES
         #
-        data = self.get_data()
+        self.data = self.get_current_data()
 
         ##
         # Calculate and output metrics prometheus client
         #
         if self.collect_high_cardinality:
-            for metric in self.build_high_cardinality_metrics(data):
+            for metric in self.build_high_cardinality_metrics():
                 yield metric
 
-        for metric in self.build_low_cardinality_metrics(data):
+        for metric in self.build_low_cardinality_metrics():
             yield metric
 
     def get_csrf_token(self) -> CsrfToken:
@@ -115,18 +117,18 @@ class PrefectMetrics(object):
                 break
         return CsrfToken.parse_obj(csrf_token.json())
 
-    def build_high_cardinality_metrics(self, data):
+    def build_high_cardinality_metrics(self):
         """
         A method to gather high cardinality metrics if the environment allows
         """
 
         # pull required objects out of the data object
-        deployments = data.get("deployments")
-        flows = data.get("flows")
-        flow_runs = data.get("flow_runs")
-        all_flow_runs = data.get("all_flow_runs")
-        work_pools = data.get("work_pools")
-        work_queues = data.get("work_queues")
+        deployments = self.data.get("deployments")
+        flows = self.data.get("flows")
+        flow_runs = self.data.get("flow_runs")
+        all_flow_runs = self.data.get("all_flow_runs")
+        work_pools = self.data.get("work_pools")
+        work_queues = self.data.get("work_queues")
 
         ##
         # PREFECT DEPLOYMENTS METRICS
@@ -464,19 +466,42 @@ class PrefectMetrics(object):
 
         yield prefect_info_work_queues
 
-    def build_low_cardinality_metrics(self, data):
+    def build_low_cardinality_metrics(self):
         """
         A method to gather low cardinality metrics
         """
-        # pull required objects out of the data object
-        all_flow_runs = data.get("all_flow_runs")
 
-        prefect_flow_state_total = GaugeMetricFamily(
-            "prefect_flow_state_total",
-            "Total quantity of prefect flows in a given state",
+        prefect_flow_run_state_total = GaugeMetricFamily(
+            "prefect_flow_run_state_total",
+            "Aggregate state metrics for prefect flow runs",
             labels=["state"],
         )
+        self.calculate_flow_run_state_metrics(metric=prefect_flow_run_state_total)
+        yield prefect_flow_run_state_total
 
+        prefect_flow_run_state_past_24_hours_total = GaugeMetricFamily(
+            "prefect_flow_run_state_past_24_hours_total",
+            "Aggregate state metrics for prefect flow runs timestamped in the past 24 hours",
+            labels=["state"],
+        )
+        start_24_hour_period_timestamp = datetime.now(timezone.utc) - timedelta(
+            hours=24
+        )
+        self.calculate_flow_run_state_metrics(
+            metric=prefect_flow_run_state_past_24_hours_total,
+            start_timestamp=start_24_hour_period_timestamp,
+        )
+        yield prefect_flow_run_state_past_24_hours_total
+
+    def calculate_flow_run_state_metrics(
+        self,
+        metric,
+        start_timestamp=datetime(1970, 1, 1, tzinfo=timezone.utc),
+        end_timestamp=datetime.now(timezone.utc),
+    ) -> any:
+        # pull required objects out of the data object
+        all_flow_runs = self.data.get("all_flow_runs")
+        # breakpoint()
         state_total = {
             "Failed": 0,
             "Crashed": 0,
@@ -490,22 +515,26 @@ class PrefectMetrics(object):
 
         for flow_run in all_flow_runs:
             state = flow_run["state"]["name"]
+            timestamp = datetime.strptime(
+                flow_run["state"]["timestamp"], "%Y-%m-%dT%H:%M:%S.%f%z"
+            )
+
             if state_total.get(state, None) is None:
                 state_total.update({state: 0})
-            state_total[state] += 1
+
+            if start_timestamp <= timestamp <= end_timestamp:
+                state_total[state] += 1
 
         for state, total in state_total.items():
-            prefect_flow_state_total.add_metric([state], total)
+            metric.add_metric([state], total)
 
-        yield prefect_flow_state_total
-
-    def get_data(self) -> {str, any}:
+    def get_current_data(self) -> {str, any}:
         """
         Gathers the data requried to calcualte metrics and returns it in a single dictonary object.
         """
-        data = dict()
+        current_data = dict()
 
-        data["deployments"] = PrefectDeployments(
+        current_data["deployments"] = PrefectDeployments(
             self.url,
             self.headers,
             self.max_retries,
@@ -514,7 +543,7 @@ class PrefectMetrics(object):
             self.pagination_limit,
         ).get_deployments_info()
 
-        data["flows"] = PrefectFlows(
+        current_data["flows"] = PrefectFlows(
             self.url,
             self.headers,
             self.max_retries,
@@ -523,7 +552,7 @@ class PrefectMetrics(object):
             self.pagination_limit,
         ).get_flows_info()
 
-        data["flow_runs"] = PrefectFlowRuns(
+        current_data["flow_runs"] = PrefectFlowRuns(
             self.url,
             self.headers,
             self.max_retries,
@@ -533,7 +562,7 @@ class PrefectMetrics(object):
             self.pagination_limit,
         ).get_flow_runs_info()
 
-        data["all_flow_runs"] = PrefectFlowRuns(
+        current_data["all_flow_runs"] = PrefectFlowRuns(
             self.url,
             self.headers,
             self.max_retries,
@@ -543,7 +572,7 @@ class PrefectMetrics(object):
             self.pagination_limit,
         ).get_all_flow_runs_info()
 
-        data["work_pools"] = PrefectWorkPools(
+        current_data["work_pools"] = PrefectWorkPools(
             self.url,
             self.headers,
             self.max_retries,
@@ -552,7 +581,7 @@ class PrefectMetrics(object):
             self.pagination_limit,
         ).get_work_pools_info()
 
-        data["work_queues"] = PrefectWorkQueues(
+        current_data["work_queues"] = PrefectWorkQueues(
             self.url,
             self.headers,
             self.max_retries,
@@ -561,4 +590,4 @@ class PrefectMetrics(object):
             self.pagination_limit,
         ).get_work_queues_info()
 
-        return data
+        return current_data
