@@ -20,16 +20,16 @@ class PrefectMetrics(object):
 
     def __init__(
         self,
-        url,
+        url: str,
         headers,
         offset_minutes,
-        max_retries,
-        csrf_enabled,
-        client_id,
-        logger,
-        enable_pagination,
-        pagination_limit,
-        collect_high_cardinality,
+        max_retries: int,
+        csrf_enabled: bool,
+        client_id: str,
+        logger: object,
+        enable_pagination: bool,
+        pagination_limit: int,
+        collect_high_cardinality: bool,
     ) -> None:
         """
         Initialize the PrefectMetrics instance.
@@ -43,8 +43,6 @@ class PrefectMetrics(object):
             enable_pagination (bool): Indicates if pagination is enbabled.
             pagination_limit (int): How many records per page.
             collect_high_cardinality (bool): Indicates if high cardinality values should be collected.
-
-
         """
         self.headers = headers
         self.offset_minutes = offset_minutes
@@ -64,7 +62,6 @@ class PrefectMetrics(object):
     def collect(self) -> Metric:
         """
         Get and set Prefect work queues metrics.
-
         """
 
         ##
@@ -109,7 +106,6 @@ class PrefectMetrics(object):
     def get_csrf_token(self) -> CsrfToken:
         """
         Pull CSRF Token from CSRF Endpoint.
-
         """
         for retry in range(self.max_retries):
             try:
@@ -293,11 +289,11 @@ class PrefectMetrics(object):
         )
         yield prefect_flow_run_state_past_24_hours
 
-    def get_current_data(self) -> {str, any}:
+    def get_current_data(self) -> {str, object}:
         """
         Gathers the data requried to calcualte metrics and returns it in a single dictonary object.
         """
-        current_data = dict()
+        current_data = {}
 
         current_data["deployments"] = PrefectDeployments(
             self.url,
