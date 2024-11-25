@@ -2,11 +2,12 @@ import os
 import logging
 import time
 import uuid
-import base64
 from ast import literal_eval
 
 from dotenv import load_dotenv
 from prometheus_client import start_http_server, REGISTRY
+
+from utils.auth import Authorization
 
 from metrics.metrics import PrefectMetrics
 from metrics.healthz import PrefectHealthz
@@ -44,15 +45,11 @@ def metrics():
     # Configure headers for HTTP requests
     headers = {"accept": "application/json", "Content-Type": "application/json"}
 
-    auth_type = "Unset"
-    if api_key:
-        auth_type = "Bearer Token"
-        headers["Authorization"] = f"Bearer {api_key}"
-    elif api_user and api_password:
-        auth_type = "Basic Auth"
-        auth_str = f"{api_user}:{api_password}"
-        b64_auth_str = base64.b64encode(bytes(auth_str, "utf-8")).decode("utf-8")
-        headers["Authorization"] = f"Basic {b64_auth_str}"
+    # Get authorization value
+    auth_value, auth_type = Authorization(
+        api_key, api_user, api_password
+    ).get_auth_header()
+    headers["Authorization"] = auth_value
     logger.info("Authorization Type: %s", auth_type)
 
     # check endpoint

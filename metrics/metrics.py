@@ -471,13 +471,13 @@ class PrefectMetrics(object):
         # pull required objects out of the data object
         all_flow_runs = data.get("all_flow_runs")
 
-        prefect_flow_state_counts = CounterMetricFamily(
-            "prefect_flow_state_counts",
+        prefect_flow_state_total = GaugeMetricFamily(
+            "prefect_flow_state_total",
             "Total quantity of prefect flows in a given state",
             labels=["state"],
         )
 
-        state_counts = {
+        state_total = {
             "Failed": 0,
             "Crashed": 0,
             "Running": 0,
@@ -485,16 +485,19 @@ class PrefectMetrics(object):
             "Completed": 0,
             "Pending": 0,
             "Scheduled": 0,
+            "Late": 0,
         }
 
         for flow_run in all_flow_runs:
             state = flow_run["state"]["name"]
-            state_counts[state] += 1
+            if state_total.get(state, None) is None:
+                state_total.update({state: 0})
+            state_total[state] += 1
 
-        for state, count in state_counts.items():
-            prefect_flow_state_counts.add_metric([state], count)
+        for state, total in state_total.items():
+            prefect_flow_state_total.add_metric([state], total)
 
-        yield prefect_flow_state_counts
+        yield prefect_flow_state_total
 
     def get_data(self) -> {str, any}:
         """
