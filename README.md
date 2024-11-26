@@ -108,6 +108,12 @@ You can modify environment variables to change the behavior of the exporter.
 | `PREFECT_API_PASSWORD` | Passes a password for basic auth | `""` |
 | `COLLECT_HIGH_CARDINALITY` | Boolean that configures the system to either collect or ignore high cardinality metrics | `True` |
 
+## Dependency Management
+
+If your contributions require changes to this systems dependencies then use the following steps to update the project's requirements.
+1. Add your changes to the `requirements.in` file.
+2. Generate package dependencies using `pip-compile -r requirements.in`. This will populate the `requrements.txt` file. See [pip-tools](https://github.com/jazzband/pip-tools) doc for more information.
+3. Run `pip install --upgrade -r requirements.txt` to upgrade your depenencies in your virtual environment with the new contents of your `requirements.txt` file.
 
 ## Contributing
 
