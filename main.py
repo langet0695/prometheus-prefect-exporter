@@ -3,6 +3,7 @@ import logging
 import time
 import uuid
 from ast import literal_eval
+import json
 
 from dotenv import load_dotenv
 from prometheus_client import start_http_server, REGISTRY
@@ -28,12 +29,14 @@ def metrics():
     api_key = str(os.getenv("PREFECT_API_KEY", ""))
     api_user = str(os.getenv("PREFECT_API_USER", ""))
     api_password = str(os.getenv("PREFECT_API_PASSWORD", ""))
-    collect_high_cardinality = literal_eval(
-        os.getenv("COLLECT_HIGH_CARDINALITY", "True")
-    )
     enable_pagination = literal_eval(os.getenv("PAGINATION_ENABLED", "True"))
     pagination_limit = int(os.getenv("PAGINATION_LIMIT", 200))
     csrf_enabled = literal_eval(os.getenv("PREFECT_CSRF_ENABLED", "False"))
+    target_metrics = json.loads(
+        os.getenv(
+            "TARGET_METRICS", ["low_cardinality_metrics", "high_cardinality_metrics"]
+        )
+    )
 
     csrf_client_id = str(uuid.uuid4())
     # Configure logging
@@ -52,7 +55,7 @@ def metrics():
         logger=logger,
     ).get_auth_header()
     headers["Authorization"] = auth_value
-
+    print(api_user)
     # check endpoint
     PrefectHealthz(
         url=url, headers=headers, max_retries=max_retries, logger=logger
@@ -70,17 +73,17 @@ def metrics():
         # Enable pagination if not specified to avoid breaking existing deployments
         enable_pagination=enable_pagination,
         pagination_limit=pagination_limit,
-        collect_high_cardinality=collect_high_cardinality,
+        target_metrics=target_metrics,
     )
-
+    print("Init Metrics")
     # Register the metrics with Prometheus
     logger.info("Initializing metrics...")
     REGISTRY.register(metrics)
-
+    print("Start Listening")
     # Start the HTTP server to expose Prometheus metrics
     start_http_server(metrics_port)
     logger.info("Exporter listening on port :%i", metrics_port)
-
+    print("Listening")
     # Run the loop to collect Prefect metrics
     while True:
         time.sleep(5)
