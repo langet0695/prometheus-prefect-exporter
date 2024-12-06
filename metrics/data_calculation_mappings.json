@@ -1,0 +1,81 @@
+{
+    "name": {
+        "metrics_to_collect": [""],
+        "data_sources_needed": [""]
+    },
+    "low_cardinality_metrics": {
+        "metrics_to_collect": [
+            "prefect_deployments_total",
+            "prefect_flows_total",
+            "prefect_flow_runs_total",
+            "prefect_work_pools_total",
+            "prefect_work_queues_total",
+            "prefect_flow_run_state_total",
+            "prefect_flow_run_state_past_24_hours"
+        ],
+        "data_sources_needed": ["deployments", "flows", "work_pools", "work_queues", "all_flow_runs"]
+    },
+    "high_cardinality_metrics": {
+        "metrics_to_collect": [
+            "prefect_info_deployments",
+            "prefect_info_flows",
+            "prefect_flow_runs_total_run_time",
+            "prefect_info_flow_runs",
+            "prefect_info_work_pools",
+            "prefect_info_work_queues"
+        ],
+        "data_sources_needed": ["deployments", "flows", "flow_runs", "work_pools", "work_queues", "all_flow_runs"]
+    },
+    "prefect_deployments_total": {
+        "metrics_to_collect": ["prefect_deployments_total"],
+        "data_sources_needed": ["deployments"]
+    },
+    "prefect_flows_total": {
+        "metrics_to_collect": ["prefect_flows_total"],
+        "data_sources_needed": ["flows"]
+    },
+    "prefect_flow_runs_total": {
+        "metrics_to_collect": ["prefect_flow_runs_total"],
+        "data_sources_needed": ["all_flow_runs"]
+    },
+    "prefect_work_pools_total": {
+        "metrics_to_collect": ["prefect_work_pools_total"],
+        "data_sources_needed": ["work_pools"]
+    },
+    "prefect_work_queues_total": {
+        "metrics_to_collect": ["prefect_work_queues_total"],
+        "data_sources_needed": ["work_queues"]
+    },
+    "prefect_flow_run_state_total": {
+        "metrics_to_collect": ["prefect_flow_run_state_total"],
+        "data_sources_needed": ["all_flow_runs"]
+    },
+    "prefect_flow_run_state_past_24_hours": {
+        "metrics_to_collect": ["prefect_flow_run_state_past_24_hours"],
+        "data_sources_needed": ["all_flow_runs"]
+    },
+    "": {
+        "metrics_to_collect": ["prefect_info_deployments"],
+        "data_sources_needed": ["deployments", "flows"]
+    },
+    "": {
+        "metrics_to_collect": ["prefect_info_flows"],
+        "data_sources_needed": ["flows"]
+    },
+    "": {
+        "metrics_to_collect": ["prefect_flow_runs_total_run_time"],
+        "data_sources_needed": ["flows", "all_flow_runs"]
+    },
+    "": {
+        "metrics_to_collect": ["prefect_info_flow_runs"],
+        "data_sources_needed": ["deployments", "flows", "flow_runs"]
+    },
+    "": {
+        "metrics_to_collect": ["prefect_info_work_pools"],
+        "data_sources_needed": ["work_pools"]
+    },
+    "": {
+        "metrics_to_collect": ["prefect_info_work_queues"],
+        "data_sources_needed": ["work_queues"]
+    }
+}

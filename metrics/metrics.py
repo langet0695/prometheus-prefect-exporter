@@ -1,16 +1,13 @@
-from datetime import datetime, timezone, timedelta
+import json
 import time
 import requests
 import pendulum
 from prefect.client.schemas.objects import CsrfToken
-from prometheus_client.core import GaugeMetricFamily, CounterMetricFamily, Metric
+from prometheus_client.core import Metric
 
-from metrics.deployments import PrefectDeployments
-from metrics.flow_runs import PrefectFlowRuns
-from metrics.flows import PrefectFlows
-from metrics.work_pools import PrefectWorkPools
-from metrics.work_queues import PrefectWorkQueues
-from metrics.calculator import MetricCalculator
+
+from metrics.data_sourcer import DataSourcer
+from metrics.metric_builder import MetricBuilder
 
 
 class PrefectMetrics(object):
@@ -29,7 +26,7 @@ class PrefectMetrics(object):
         logger: object,
         enable_pagination: bool,
         pagination_limit: int,
-        collect_high_cardinality: bool,
+        target_metrics: list,
     ) -> None:
         """
         Initialize the PrefectMetrics instance.
@@ -42,7 +39,7 @@ class PrefectMetrics(object):
             logger (obj): The logger object.
             enable_pagination (bool): Indicates if pagination is enbabled.
             pagination_limit (int): How many records per page.
-            collect_high_cardinality (bool): Indicates if high cardinality values should be collected.
+            target_metrics(list): A list of metrics or metric groups that should be collected
         """
         self.headers = headers
         self.offset_minutes = offset_minutes
@@ -55,9 +52,11 @@ class PrefectMetrics(object):
         self.pagination_limit = pagination_limit
         self.csrf_token = None
         self.csrf_token_expiration = None
-        self.collect_high_cardinality = collect_high_cardinality
-        self.data = None
+        self.target_metrics = target_metrics
+        self.data = {}
         self.calculator = None
+        self.metrics_to_collect = []
+        self.data_sources = []
 
     def collect(self) -> Metric:
         """
@@ -80,20 +79,39 @@ class PrefectMetrics(object):
 
 
         ##
-        # PREFECT GET RESOURCES
+        # Get data sources to fetch and metrics to load
         #
-        self.data = self.get_current_data()
-        self.calculator = MetricCalculator(self.data)
+        (
+            self.metrics_to_collect,
+            self.data_sources,
+        ) = self.get_data_calculation_mappings()
+        print(self.metrics_to_collect)
+        print(self.data_sources)
 
         ##
-        # Calculate and output metrics prometheus client
+        # Get Prefect resources based on required data sources
         #
-        if self.collect_high_cardinality:
-            for metric in self.build_high_cardinality_metrics():
-                yield metric
+        sourcer = DataSourcer(
+            url=self.url,
+            headers=self.headers,
+            max_retries=self.max_retries,
+            logger=self.logger,
+            enable_pagination=self.enable_pagination,
+            pagination_limit=self.pagination_limit,
+            offset_minutes=self.offset_minutes,
+        )
+        for source in self.data_sources:
+            fetch_source_data = sourcer.get_sourcing_method(source)
+            self.data[source] = fetch_source_data()
 
-        for metric in self.build_low_cardinality_metrics():
-            yield metric
+        ##
+        # Build and output metrics to the prometheus client
+        #
+        builder = MetricBuilder(data=self.data)
+        for metric in self.metrics_to_collect:
+            build_metrics_output = builder.get_builder_method(metric)
+            for metric in build_metrics_output():
+                yield metric
 
     def get_csrf_token(self) -> CsrfToken:
         """
@@ -113,234 +131,19 @@ class PrefectMetrics(object):
                 break
         return CsrfToken.parse_obj(csrf_token.json())
 
-    def build_high_cardinality_metrics(self) -> Metric:
+    def get_data_calculation_mappings(self):
         """
-        A method to gather high cardinality metrics if the environment allows
+        Builds two sets that represent all the metrics to calculate and data sources required based on what the environment dictates is required.
         """
-
-        prefect_info_deployments = GaugeMetricFamily(
-            "prefect_info_deployment",
-            "Prefect deployment info",
-            labels=[
-                "created",
-                "flow_id",
-                "flow_name",
-                "deployment_id",
-                "is_schedule_active",
-                "deployment_name",
-                "path",
-                "paused",
-                "work_pool_name",
-                "work_queue_name",
-                "status",
-            ],
-        )
-        self.calculator.calculate_prefect_info_deployments(
-            metric=prefect_info_deployments
-        )
-        yield prefect_info_deployments
-
-        prefect_info_flows = GaugeMetricFamily(
-            "prefect_info_flows",
-            "Prefect flow info",
-            labels=["created", "flow_id", "flow_name"],
-        )
-        self.calculator.calculate_prefect_info_flows(metric=prefect_info_flows)
-        yield prefect_info_flows
-
-        prefect_flow_runs_total_run_time = CounterMetricFamily(
-            "prefect_flow_runs_total_run_time",
-            "Prefect flow-run total run time in seconds",
-            labels=["flow_id", "flow_name", "flow_run_name"],
-        )
-        self.calculator.calculate_prefect_flow_runs_total_run_time(
-            metric=prefect_flow_runs_total_run_time
-        )
-        yield prefect_flow_runs_total_run_time
-
-        prefect_info_flow_runs = GaugeMetricFamily(
-            "prefect_info_flow_runs",
-            "Prefect flow runs info",
-            labels=[
-                "created",
-                "deployment_id",
-                "deployment_name",
-                "end_time",
-                "flow_id",
-                "flow_name",
-                "flow_run_id",
-                "flow_run_name",
-                "run_count",
-                "start_time",
-                "state_id",
-                "state_name",
-                "total_run_time",
-                "work_queue_name",
-            ],
-        )
-        self.calculator.calculate_prefect_info_flow_runs(metric=prefect_info_flow_runs)
-        yield prefect_info_flow_runs
-
-        prefect_info_work_pools = GaugeMetricFamily(
-            "prefect_info_work_pools",
-            "Prefect work pools info",
-            labels=[
-                "created",
-                "work_queue_id",
-                "work_pool_id",
-                "is_paused",
-                "work_pool_name",
-                "type",
-                "status",
-            ],
-        )
-        self.calculator.calculate_prefect_info_work_pools(
-            metric=prefect_info_work_pools
-        )
-        yield prefect_info_work_pools
-
-        prefect_info_work_queues = GaugeMetricFamily(
-            "prefect_info_work_queues",
-            "Prefect work queues info",
-            labels=[
-                "created",
-                "work_queue_id",
-                "is_paused",
-                "work_queue_name",
-                "priority",
-                "type",
-                "work_pool_id",
-                "work_pool_name",
-                "status",
-                "healthy",
-                "late_runs_count",
-                "last_polled",
-                "health_check_policy_maximum_late_runs",
-                "health_check_policy_maximum_seconds_since_last_polled",
-            ],
-        )
-        self.calculator.calculate_prefect_info_work_queues(
-            metric=prefect_info_work_queues
-        )
-        yield prefect_info_work_queues
-
-    def build_low_cardinality_metrics(self) -> Metric:
-        """
-        A method to gather low cardinality metrics
-        """
-
-        prefect_deployments = GaugeMetricFamily(
-            "prefect_deployments_total", "Prefect total deployments", labels=[]
-        )
-        self.calculator.calculate_prefect_deployments_total(metric=prefect_deployments)
-        yield prefect_deployments
-
-        prefect_flows = GaugeMetricFamily(
-            "prefect_flows_total", "Prefect total flows", labels=[]
-        )
-        self.calculator.calculate_prefect_flows_total(metric=prefect_flows)
-        yield prefect_flows
-
-        prefect_flow_runs = GaugeMetricFamily(
-            "prefect_flow_runs_total", "Prefect total flow runs", labels=[]
-        )
-        self.calculator.calculate_prefect_flow_runs_total(metric=prefect_flow_runs)
-        yield prefect_flow_runs
-
-        prefect_work_pools = GaugeMetricFamily(
-            "prefect_work_pools_total", "Prefect total work pools", labels=[]
-        )
-        self.calculator.calculate_prefect_work_pools_total(metric=prefect_work_pools)
-        yield prefect_work_pools
-
-        prefect_work_queues = GaugeMetricFamily(
-            "prefect_work_queues_total", "Prefect total work queues", labels=[]
-        )
-        self.calculator.calculate_prefect_work_queues_total(metric=prefect_work_queues)
-        yield prefect_work_queues
-
-        prefect_flow_run_state = GaugeMetricFamily(
-            "prefect_flow_run_state_total",
-            "Aggregate state metrics for prefect flow runs",
-            labels=["state"],
-        )
-        self.calculator.calculate_flow_run_state_metrics(metric=prefect_flow_run_state)
-        yield prefect_flow_run_state
-
-        prefect_flow_run_state_past_24_hours = GaugeMetricFamily(
-            "prefect_flow_run_state_past_24_hours_total",
-            "Aggregate state metrics for prefect flow runs timestamped in the past 24 hours",
-            labels=["state"],
-        )
-        start_24_hour_period_timestamp = datetime.now(timezone.utc) - timedelta(
-            hours=24
-        )
-        self.calculator.calculate_flow_run_state_metrics(
-            metric=prefect_flow_run_state_past_24_hours,
-            start_timestamp=start_24_hour_period_timestamp,
-        )
-        yield prefect_flow_run_state_past_24_hours
-
-    def get_current_data(self) -> {str, object}:
-        """
-        Gathers the data requried to calcualte metrics and returns it in a single dictonary object.
-        """
-        current_data = {}
-
-        current_data["deployments"] = PrefectDeployments(
-            self.url,
-            self.headers,
-            self.max_retries,
-            self.logger,
-            self.enable_pagination,
-            self.pagination_limit,
-        ).get_deployments_info()
-
-        current_data["flows"] = PrefectFlows(
-            self.url,
-            self.headers,
-            self.max_retries,
-            self.logger,
-            self.enable_pagination,
-            self.pagination_limit,
-        ).get_flows_info()
-
-        current_data["flow_runs"] = PrefectFlowRuns(
-            self.url,
-            self.headers,
-            self.max_retries,
-            self.offset_minutes,
-            self.logger,
-            self.enable_pagination,
-            self.pagination_limit,
-        ).get_flow_runs_info()
-
-        current_data["all_flow_runs"] = PrefectFlowRuns(
-            self.url,
-            self.headers,
-            self.max_retries,
-            self.offset_minutes,
-            self.logger,
-            self.enable_pagination,
-            self.pagination_limit,
-        ).get_all_flow_runs_info()
-
-        current_data["work_pools"] = PrefectWorkPools(
-            self.url,
-            self.headers,
-            self.max_retries,
-            self.logger,
-            self.enable_pagination,
-            self.pagination_limit,
-        ).get_work_pools_info()
-
-        current_data["work_queues"] = PrefectWorkQueues(
-            self.url,
-            self.headers,
-            self.max_retries,
-            self.logger,
-            self.enable_pagination,
-            self.pagination_limit,
-        ).get_work_queues_info()
-
-        return current_data
+        with open(
+            "metrics/data_calculation_mappings.json", "r", encoding="utf-8"
+        ) as file:
+            mapping_data = json.load(file)
+        metrics_to_collect = set()
+        data_sources = set()
+        for target in self.target_metrics:
+            for metric in mapping_data[target]["metrics_to_collect"]:
+                metrics_to_collect.add(metric)
+            for data_source in mapping_data[target]["data_sources_needed"]:
+                data_sources.add(data_source)
+        return metrics_to_collect, data_sources
