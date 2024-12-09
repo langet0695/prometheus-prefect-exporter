@@ -8,7 +8,8 @@ class MetricBuilder:
     A class used to build prometheus metrics as instructed by the system
     """
 
-    def __init__(self, data) -> None:
+    def __init__(self, data, offset_minutes) -> None:
+        self.offset_minutes = offset_minutes
         self.calculator = MetricCalculator(data)
         self.mapping_dict = self.get_mapping_dict()
 
@@ -33,6 +34,7 @@ class MetricBuilder:
             "prefect_info_work_queues": self.build_prefect_info_work_queues,
             "prefect_flow_run_state_total": self.build_prefect_flow_run_state_total,
             "prefect_flow_run_state_past_24_hours": self.build_prefect_flow_run_state_past_24_hours,
+            "prefect_flow_run_state_past_offset_minutes": self.build_prefect_flow_run_state_past_offset_minutes,
         }
         return mapping_dict
 
@@ -254,3 +256,22 @@ class MetricBuilder:
             start_timestamp=start_24_hour_period_timestamp,
         )
         yield prefect_flow_run_state_past_24_hours
+
+    def build_prefect_flow_run_state_past_offset_minutes(self) -> Metric:
+        """
+        Build a metric calculating aggregate flow run state using the OFFSET_MINUTES environment variable
+        """
+        prefect_flow_run_state_past_offset_minutes = GaugeMetricFamily(
+            f"prefect_flow_run_state_past_{self.offset_minutes}_minutes_total",
+            "Aggregate state metrics for prefect flow runs timestamped in the past {self.offset_minutes} minutes.",
+            labels=["state"],
+        )
+        start_period_timestamp = datetime.now(timezone.utc) - timedelta(
+            minutes=self.offset_minutes
+        )
+        self.calculator.calculate_flow_run_state_metrics(
+            metric=prefect_flow_run_state_past_offset_minutes,
+            start_timestamp=start_period_timestamp,
+            source="flow_runs",
+        )
+        yield prefect_flow_run_state_past_offset_minutes

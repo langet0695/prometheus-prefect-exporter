@@ -115,7 +115,10 @@ class PrefectMetrics(object):
         ##
         # Build and output metrics to the prometheus client
         #
-        builder = MetricBuilder(data=self.data)
+        builder = MetricBuilder(
+            data=self.data,
+            offset_minutes=self.offset_minutes,
+        )
         for metric in self.metrics_to_collect:
             build_metrics_output = builder.get_builder_method(metric)
             for metric in build_metrics_output():
