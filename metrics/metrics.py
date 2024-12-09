@@ -107,9 +107,7 @@ class PrefectMetrics(object):
             offset_minutes=self.offset_minutes,
         )
         for source in self.data_sources:
-            start = time.time()
             fetch_source_data = sourcer.get_sourcing_method(source)
-            self.logger.info("%s fetch in second: %d", source, (time.time() - start))
             self.data[source] = fetch_source_data()
 
         ##
