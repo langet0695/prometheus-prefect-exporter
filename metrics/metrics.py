@@ -55,8 +55,16 @@ class PrefectMetrics(object):
         self.target_metrics = target_metrics
         self.data = {}
         self.calculator = None
-        self.metrics_to_collect = []
-        self.data_sources = []
+
+        ##
+        # Get lists data sources to fetch and metrics to load
+        #
+        (
+            self.metrics_to_collect,
+            self.data_sources,
+        ) = self.get_data_calculation_mappings()
+        self.logger.info("Metrics to Collect: %s", str(self.metrics_to_collect))
+        self.logger.info("Data Sources: %s", str(self.data_sources))
 
     def collect(self) -> Metric:
         """
@@ -87,16 +95,6 @@ class PrefectMetrics(object):
             self.logger.info("Pagination is disabled")
 
         ##
-        # Get data sources to fetch and metrics to load
-        #
-        (
-            self.metrics_to_collect,
-            self.data_sources,
-        ) = self.get_data_calculation_mappings()
-        print(self.metrics_to_collect)
-        print(self.data_sources)
-
-        ##
         # Get Prefect resources based on required data sources
         #
         sourcer = DataSourcer(
@@ -109,13 +107,18 @@ class PrefectMetrics(object):
             offset_minutes=self.offset_minutes,
         )
         for source in self.data_sources:
+            start = time.time()
             fetch_source_data = sourcer.get_sourcing_method(source)
+            self.logger.info("%s fetch in second: %d", source, (time.time() - start))
             self.data[source] = fetch_source_data()
 
         ##
         # Build and output metrics to the prometheus client
         #
-        builder = MetricBuilder(data=self.data)
+        builder = MetricBuilder(
+            data=self.data,
+            offset_minutes=self.offset_minutes,
+        )
         for metric in self.metrics_to_collect:
             build_metrics_output = builder.get_builder_method(metric)
             for metric in build_metrics_output():

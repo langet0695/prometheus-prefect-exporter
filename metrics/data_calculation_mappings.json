@@ -11,7 +11,8 @@
             "prefect_work_pools_total",
             "prefect_work_queues_total",
             "prefect_flow_run_state_total",
-            "prefect_flow_run_state_past_24_hours"
+            "prefect_flow_run_state_past_24_hours",
+            "prefect_flow_run_state_past_offset_minutes"
         ],
         "data_sources_needed": ["deployments", "flows", "work_pools", "work_queues", "all_flow_runs"]
     },
@@ -23,6 +24,22 @@
             "prefect_info_flow_runs",
             "prefect_info_work_pools",
             "prefect_info_work_queues"
+        ],
+        "data_sources_needed": ["deployments", "flows", "flow_runs", "work_pools", "work_queues", "all_flow_runs"]
+    },
+    "legacy_metrics": {
+        "metrics_to_collect": [
+            "prefect_info_deployments",
+            "prefect_deployments_total",
+            "prefect_info_flows",
+            "prefect_info_flow_runs",
+            "prefect_flows_total",
+            "prefect_flow_runs_total",
+            "prefect_info_work_pools",
+            "prefect_work_pools_total",
+            "prefect_info_work_queues",
+            "prefect_work_queues_total",
+            "prefect_flow_runs_total_run_time"
         ],
         "data_sources_needed": ["deployments", "flows", "flow_runs", "work_pools", "work_queues", "all_flow_runs"]
     },
@@ -54,28 +71,32 @@
         "metrics_to_collect": ["prefect_flow_run_state_past_24_hours"],
         "data_sources_needed": ["all_flow_runs"]
     },
-    "": {
+    "prefect_info_deployments": {
         "metrics_to_collect": ["prefect_info_deployments"],
         "data_sources_needed": ["deployments", "flows"]
     },
-    "": {
+    "prefect_info_flows": {
         "metrics_to_collect": ["prefect_info_flows"],
         "data_sources_needed": ["flows"]
     },
-    "": {
+    "prefect_flow_runs_total_run_time": {
         "metrics_to_collect": ["prefect_flow_runs_total_run_time"],
         "data_sources_needed": ["flows", "all_flow_runs"]
     },
-    "": {
+    "prefect_info_flow_runs": {
         "metrics_to_collect": ["prefect_info_flow_runs"],
         "data_sources_needed": ["deployments", "flows", "flow_runs"]
     },
-    "": {
+    "prefect_info_work_pools": {
         "metrics_to_collect": ["prefect_info_work_pools"],
         "data_sources_needed": ["work_pools"]
     },
-    "": {
+    "prefect_info_work_queues": {
         "metrics_to_collect": ["prefect_info_work_queues"],
         "data_sources_needed": ["work_queues"]
+    },
+    "prefect_flow_run_state_past_offset_minutes": {
+        "metrics_to_collect": ["prefect_flow_run_state_past_offset_minutes"],
+        "data_sources_needed": ["flow_runs"]
     }
 }

@@ -21,6 +21,7 @@ class MetricCalculator:
         metric: Metric,
         start_timestamp: datetime = datetime(1970, 1, 1, tzinfo=timezone.utc),
         end_timestamp: datetime = datetime.now(timezone.utc),
+        source="all_flow_runs",
     ) -> None:
         """
         Aggregation of flow runs segmented by state.
@@ -31,7 +32,7 @@ class MetricCalculator:
             end_timestamp(Datetime): Represents the end of the flow run timestamps that will be included
         """
 
-        all_flow_runs = self.data.get("all_flow_runs")
+        flow_runs = self.data.get(source)
 
         state_total = {
             "Failed": 0,
@@ -44,7 +45,7 @@ class MetricCalculator:
             "Late": 0,
         }
 
-        for flow_run in all_flow_runs:
+        for flow_run in flow_runs:
             state = flow_run["state"]["name"]
             timestamp = datetime.strptime(
                 flow_run["state"]["timestamp"], "%Y-%m-%dT%H:%M:%S.%f%z"
