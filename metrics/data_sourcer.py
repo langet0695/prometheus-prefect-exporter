@@ -1,5 +1,3 @@
-import time
-
 from metrics.deployments import PrefectDeployments
 from metrics.flow_runs import PrefectFlowRuns
 from metrics.flows import PrefectFlows
@@ -61,7 +59,6 @@ class DataSourcer:
         """
         Fetch deployment data
         """
-        start = time.time()
         deployments = PrefectDeployments(
             self.url,
             self.headers,
@@ -70,14 +67,12 @@ class DataSourcer:
             self.enable_pagination,
             self.pagination_limit,
         ).get_deployments_info()
-        print(f"Deployments fetch in seconds: {time.time()-start}")
         return deployments
 
     def get_flows(self):
         """
         Fetch flow data
         """
-        start = time.time()
         flows = PrefectFlows(
             self.url,
             self.headers,
@@ -86,14 +81,12 @@ class DataSourcer:
             self.enable_pagination,
             self.pagination_limit,
         ).get_flows_info()
-        print(f"Flows fetch in seconds: {time.time()-start}")
         return flows
 
     def get_flow_runs(self):
         """
         Fetch flow run data in the legacy manner
         """
-        start = time.time()
         flow_runs = PrefectFlowRuns(
             self.url,
             self.headers,
@@ -103,14 +96,12 @@ class DataSourcer:
             self.enable_pagination,
             self.pagination_limit,
         ).get_flow_runs_info()
-        print(f"Flow Runs fetch in seconds: {time.time()-start}")
         return flow_runs
 
     def get_all_flow_runs(self):
         """
         Fetch all flow run from the entire history of the given prefect instance
         """
-        start = time.time()
         all_flow_runs = PrefectFlowRuns(
             self.url,
             self.headers,
@@ -120,14 +111,12 @@ class DataSourcer:
             self.enable_pagination,
             self.pagination_limit,
         ).get_all_flow_runs_info()
-        print(f"All Flow Runs fetch in seconds: {time.time()-start}")
         return all_flow_runs
 
     def get_work_pools(self):
         """
         Fetch work pool data
         """
-        start = time.time()
         work_pools = PrefectWorkPools(
             self.url,
             self.headers,
@@ -136,14 +125,12 @@ class DataSourcer:
             self.enable_pagination,
             self.pagination_limit,
         ).get_work_pools_info()
-        print(f"Work Pools fetch in seconds: {time.time()-start}")
         return work_pools
 
     def get_work_queues(self):
         """
         Fetch work queue data
         """
-        start = time.time()
         work_queues = PrefectWorkQueues(
             self.url,
             self.headers,
@@ -152,5 +139,4 @@ class DataSourcer:
             self.enable_pagination,
             self.pagination_limit,
         ).get_work_queues_info()
-        print(f"Work Queues fetch in seconds: {time.time()-start}")
         return work_queues
