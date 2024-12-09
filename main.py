@@ -55,7 +55,7 @@ def metrics():
         logger=logger,
     ).get_auth_header()
     headers["Authorization"] = auth_value
-    print(api_user)
+
     # check endpoint
     PrefectHealthz(
         url=url, headers=headers, max_retries=max_retries, logger=logger
@@ -86,15 +86,15 @@ def metrics():
         pagination_limit=pagination_limit,
         target_metrics=target_metrics,
     )
-    print("Init Metrics")
+
     # Register the metrics with Prometheus
     logger.info("Initializing metrics...")
     REGISTRY.register(metrics)
-    print("Start Listening")
+
     # Start the HTTP server to expose Prometheus metrics
     start_http_server(metrics_port)
     logger.info("Exporter listening on port :%i", metrics_port)
-    print("Listening")
+
     # Run the loop to collect Prefect metrics
     while True:
         time.sleep(5)
