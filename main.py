@@ -32,11 +32,7 @@ def metrics():
     enable_pagination = literal_eval(os.getenv("PAGINATION_ENABLED", "True"))
     pagination_limit = int(os.getenv("PAGINATION_LIMIT", 200))
     csrf_enabled = literal_eval(os.getenv("PREFECT_CSRF_ENABLED", "False"))
-    target_metrics = json.loads(
-        os.getenv(
-            "TARGET_METRICS", ["low_cardinality_metrics", "high_cardinality_metrics"]
-        )
-    )
+    target_metrics = json.loads(os.getenv("TARGET_METRICS", '["legacy_metrics"]'))
 
     csrf_client_id = str(uuid.uuid4())
     # Configure logging
