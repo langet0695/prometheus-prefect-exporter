@@ -45,6 +45,9 @@ class PrefectHealthz:
             except requests.exceptions.HTTPError as err:
                 self.logger.error(err)
                 if retry >= self.max_retries - 1:
+                    self.logger.info(
+                        "%s max retries of %d reached", self.uri, self.max_retries
+                    )
                     time.sleep(1)
                     raise SystemExit(err)
             else:

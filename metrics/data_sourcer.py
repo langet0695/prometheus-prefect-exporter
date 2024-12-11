@@ -13,12 +13,12 @@ class DataSourcer:
     def __init__(
         self,
         url: str,
-        headers,
+        headers: dict,
         max_retries: int,
         logger: object,
         enable_pagination: bool,
         pagination_limit: int,
-        offset_minutes,
+        offset_minutes: int,
     ):
         self.url = url
         self.headers = headers
@@ -27,33 +27,30 @@ class DataSourcer:
         self.enable_pagination = enable_pagination
         self.pagination_limit = pagination_limit
         self.offset_minutes = offset_minutes
-        self.mapping_dict = self.get_mapping_dict()
 
-    def get_mapping_dict(self) -> {str, callable}:
+    def fetch_data(self, source: str) -> callable:
         """
-        Returns a static dictionary of prefect data sources that can be gathered and the associated method to retrieve them.
-
-        Args:
-            None
-        """
-        mapping_dict = {
-            "deployments": self.get_deployments,
-            "flows": self.get_flows,
-            "flow_runs": self.get_flow_runs,
-            "all_flow_runs": self.get_all_flow_runs,
-            "work_pools": self.get_work_pools,
-            "work_queues": self.get_work_queues,
-        }
-        return mapping_dict
-
-    def get_sourcing_method(self, method_name: str) -> callable:
-        """
-        Returns a method that will gather source data based on the data requested.
+        Gathers source data based on the source requested.
 
         Args:
-            method_name(String): A string that will be used as a key to return the relevant method
+            source (str): The source to fetch data from
         """
-        return self.mapping_dict.get(method_name)
+
+        match source:
+            case "deployments":
+                return self.get_deployments()
+            case "flows":
+                return self.get_flows()
+            case "flow_runs":
+                return self.get_flow_runs()
+            case "all_flow_runs":
+                return self.get_all_flow_runs()
+            case "work_pools":
+                return self.get_work_pools()
+            case "work_queues":
+                return self.get_work_queues()
+            case _:
+                raise ValueError("Unknown source: " + source)
 
     def get_deployments(self):
         """
