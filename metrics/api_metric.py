@@ -47,7 +47,6 @@ class PrefectApiMetric:
             dict: JSON response containing all items from the endpoint.
         """
         endpoint = f"{self.url}/{self.uri}/filter"
-        enable_pagination = self.enable_pagination
         limit = self.pagination_limit
         offset = 0
         all_items = []
@@ -67,6 +66,9 @@ class PrefectApiMetric:
                 except requests.exceptions.HTTPError as err:
                     self.logger.error(err)
                     if retry >= self.max_retries - 1:
+                        self.logger.info(
+                            "%s max retries of %d reached", self.uri, self.max_retries
+                        )
                         time.sleep(1)
                         raise SystemExit(err)
                 else:

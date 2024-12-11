@@ -18,8 +18,8 @@ class PrefectMetrics(object):
     def __init__(
         self,
         url: str,
-        headers,
-        offset_minutes,
+        headers: dict,
+        offset_minutes: int,
         max_retries: int,
         csrf_enabled: bool,
         client_id: str,
@@ -70,7 +70,6 @@ class PrefectMetrics(object):
         """
         Get and set Prefect work queues metrics.
         """
-
         ##
         # PREFECT GET CSRF TOKEN IF ENABLED
         #
@@ -99,8 +98,7 @@ class PrefectMetrics(object):
             offset_minutes=self.offset_minutes,
         )
         for source in self.data_sources:
-            fetch_source_data = sourcer.get_sourcing_method(source)
-            self.data[source] = fetch_source_data()
+            self.data[source] = sourcer.fetch_data(source)
 
         ##
         # Build and output metrics to the prometheus client
@@ -110,9 +108,7 @@ class PrefectMetrics(object):
             offset_minutes=self.offset_minutes,
         )
         for metric in self.metrics_to_collect:
-            build_metrics_output = builder.get_builder_method(metric)
-            for metric in build_metrics_output():
-                yield metric
+            yield from builder.fetch_metrics(metric)
 
     def get_csrf_token(self) -> CsrfToken:
         """

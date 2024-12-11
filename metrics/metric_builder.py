@@ -11,41 +11,46 @@ class MetricBuilder:
     def __init__(self, data, offset_minutes) -> None:
         self.offset_minutes = offset_minutes
         self.calculator = MetricCalculator(data)
-        self.mapping_dict = self.get_mapping_dict()
 
-    def get_mapping_dict(self) -> {str, callable}:
+    def fetch_metrics(self, metric: str) -> callable:
         """
-        Returns a static dictionary of metrics that can be built and the associated method to build them.
-
-        Args:
-            None
-        """
-        mapping_dict = {
-            "prefect_deployments_total": self.build_prefect_deployments_total,
-            "prefect_info_deployments": self.build_prefect_info_deployments,
-            "prefect_flows_total": self.build_prefect_flows_total,
-            "prefect_info_flows": self.build_prefect_info_flows,
-            "prefect_flow_runs_total": self.build_prefect_flow_runs_total,
-            "prefect_flow_runs_total_run_time": self.build_prefect_flow_runs_total_run_time,
-            "prefect_info_flow_runs": self.build_prefect_info_flow_runs,
-            "prefect_work_pools_total": self.build_prefect_work_pools_total,
-            "prefect_info_work_pools": self.build_prefect_info_work_pools,
-            "prefect_work_queues_total": self.build_prefect_work_queues_total,
-            "prefect_info_work_queues": self.build_prefect_info_work_queues,
-            "prefect_flow_run_state_total": self.build_prefect_flow_run_state_total,
-            "prefect_flow_run_state_past_24_hours": self.build_prefect_flow_run_state_past_24_hours,
-            "prefect_flow_run_state_past_offset_minutes": self.build_prefect_flow_run_state_past_offset_minutes,
-        }
-        return mapping_dict
-
-    def get_builder_method(self, method_name: str) -> callable:
-        """
-        Returns a method that will build a metric based on the metric requested.
+        Gathers and calculates metrics based on the metric requested.
 
         Args:
-            method_name(String): A string that will be used as a key to return the relevant method
+            metric (str): The metric to yield
         """
-        return self.mapping_dict.get(method_name)
+
+        match metric:
+            case "prefect_deployments_total":
+                return self.build_prefect_deployments_total()
+            case "prefect_info_deployments":
+                return self.build_prefect_info_deployments()
+            case "prefect_flows_total":
+                return self.build_prefect_flows_total()
+            case "prefect_info_flows":
+                return self.build_prefect_info_flows()
+            case "prefect_flow_runs_total":
+                return self.build_prefect_flow_runs_total()
+            case "prefect_flow_runs_total_run_time":
+                return self.build_prefect_flow_runs_total_run_time()
+            case "prefect_info_flow_runs":
+                return self.build_prefect_info_flow_runs()
+            case "prefect_work_pools_total":
+                return self.build_prefect_work_pools_total()
+            case "prefect_info_work_pools":
+                return self.build_prefect_info_work_pools()
+            case "prefect_work_queues_total":
+                return self.build_prefect_work_queues_total()
+            case "prefect_info_work_queues":
+                return self.build_prefect_info_work_queues()
+            case "prefect_flow_run_state_total":
+                return self.build_prefect_flow_run_state_total()
+            case "prefect_flow_run_state_past_24_hours":
+                return self.build_prefect_flow_run_state_past_24_hours()
+            case "prefect_flow_run_state_past_offset_minutes":
+                return self.build_prefect_flow_run_state_past_offset_minutes()
+            case _:
+                raise ValueError("Unknown metric: " + metric)
 
     def build_prefect_deployments_total(self) -> Metric:
         """

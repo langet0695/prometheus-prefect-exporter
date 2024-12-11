@@ -19,7 +19,7 @@ class Authorization:
         elif self.api_user and self.api_password:
             auth_type = "Basic Auth"
             auth_str = f"{self.api_user}:{self.api_password}"
-            b64_auth_str = base64.b64encode(bytes(auth_str, "utf-8")).decode("utf-8")
+            b64_auth_str = base64.b64encode(auth_str.encode("utf-8")).decode("utf-8")
             auth_value = f"Basic {b64_auth_str}"
         self.logger.info("Authorization Type: %s", auth_type)
         return auth_value

@@ -2,7 +2,6 @@ import os
 import logging
 import time
 import uuid
-from ast import literal_eval
 import json
 
 from dotenv import load_dotenv
@@ -29,9 +28,9 @@ def metrics():
     api_key = str(os.getenv("PREFECT_API_KEY", ""))
     api_user = str(os.getenv("PREFECT_API_USER", ""))
     api_password = str(os.getenv("PREFECT_API_PASSWORD", ""))
-    enable_pagination = literal_eval(os.getenv("PAGINATION_ENABLED", "True"))
+    enable_pagination = str(os.getenv("PAGINATION_ENABLED", "True")) == "True"
     pagination_limit = int(os.getenv("PAGINATION_LIMIT", 200))
-    csrf_enabled = literal_eval(os.getenv("PREFECT_CSRF_ENABLED", "False"))
+    csrf_enabled = str(os.getenv("PREFECT_CSRF_ENABLED", "False")) == "True"
     target_metrics = json.loads(os.getenv("TARGET_METRICS", '["legacy_metrics"]'))
 
     csrf_client_id = str(uuid.uuid4())
