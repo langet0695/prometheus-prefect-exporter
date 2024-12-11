@@ -104,11 +104,11 @@ You can modify environment variables to change the behavior of the exporter.
 | `PREFECT_CSRF_ENABLED` | Enable compatibilty with Prefect Servers using CSRF protection | `False` |
 | `PAGINATION_ENABLED` | Enable pagination usage. (Uses more resources) | `True` |
 | `PAGINATION_LIMIT` | Pagination limit | `200` |
-| `PREFECT_API_USER` | Used in combination with the `PREFECT_API_PASSWORD` envrionment variable to configure basic auth. If a `PREFECT_API_KEY` is based then the system will prefer the bearer token method. | `""` |
+| `PREFECT_API_USER` | Used in combination with the `PREFECT_API_PASSWORD` envrionment variable to configure basic auth. If a `PREFECT_API_KEY` is provided then the system will prefer the bearer token method. | `""` |
 | `PREFECT_API_PASSWORD` | Passes a password for basic auth | `""` |
 | `TARGET_METRICS` | A list of metrics or metric groups that will be calculated. Available elements found in `metrics/data_calculation_mappings.json` | `'["legacy_metrics"]'` |
 
- **Note:** The `legacy_metrics` group in `TARGET_METRICS` is only set to enable users to continue using the latest version of this project with no changes to their current setup. To improve performance it is recommended to use a selection of metrics that have a low cardinality and low latency.
+ **Note:** The `legacy_metrics` group in `TARGET_METRICS` is only set to enable users to continue using the previous version of this project with no changes to their current setup. To improve performance it is recommended to use a selection of metrics that have a low cardinality and low latency.
 
 ## Dependency Management
 
