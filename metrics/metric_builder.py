@@ -274,9 +274,11 @@ class MetricBuilder:
         start_period_timestamp = datetime.now(timezone.utc) - timedelta(
             minutes=self.offset_minutes
         )
+        end_period_timestamp = datetime.now(timezone.utc)
         self.calculator.calculate_flow_run_state_metrics(
             metric=prefect_flow_run_state_past_offset_minutes,
             start_timestamp=start_period_timestamp,
+            end_timestamp=end_period_timestamp,
             source="flow_runs",
         )
         yield prefect_flow_run_state_past_offset_minutes

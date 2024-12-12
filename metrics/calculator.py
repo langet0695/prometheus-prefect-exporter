@@ -20,7 +20,7 @@ class MetricCalculator:
         self,
         metric: Metric,
         start_timestamp: datetime = datetime(1970, 1, 1, tzinfo=timezone.utc),
-        end_timestamp: datetime = datetime.now(timezone.utc),
+        end_timestamp: datetime = None,
         source="all_flow_runs",
     ) -> None:
         """
@@ -29,10 +29,13 @@ class MetricCalculator:
         Args:
             metric (Metric): A prometheus metric object that will have the calculated metric applied
             start_timestamp(Datetime): Represents the start of the flow run timestamps that will be included
-            end_timestamp(Datetime): Represents the end of the flow run timestamps that will be included
+            end_timestamp(Datetime): Represents the end of the flow run timestamps that will be included. Defaults to none as python caches the value if set to datetime.now() by default
         """
 
         flow_runs = self.data.get(source)
+
+        if not end_timestamp:
+            end_timestamp = datetime.now(timezone.utc)
 
         state_total = {
             "Failed": 0,
