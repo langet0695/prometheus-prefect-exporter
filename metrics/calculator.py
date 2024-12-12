@@ -29,7 +29,7 @@ class MetricCalculator:
         Args:
             metric (Metric): A prometheus metric object that will have the calculated metric applied
             start_timestamp(Datetime): Represents the start of the flow run timestamps that will be included
-            end_timestamp(Datetime): Represents the end of the flow run timestamps that will be included. Defaults to none as python caches the value if set to datetime.now() by default
+            end_timestamp(Datetime): Represents the end of the flow run timestamps that will be included. Defaults to the current UTC time
         """
 
         flow_runs = self.data.get(source)
