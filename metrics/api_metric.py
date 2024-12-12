@@ -66,7 +66,7 @@ class PrefectApiMetric:
                 except requests.exceptions.HTTPError as err:
                     self.logger.error(err)
                     if retry >= self.max_retries - 1:
-                        self.logger.info(
+                        self.logger.error(
                             "%s max retries of %d reached", self.uri, self.max_retries
                         )
                         time.sleep(1)
