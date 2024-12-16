@@ -59,8 +59,6 @@ def metrics():
     ##
     # NOTIFY IF PAGINATION IS ENABLED
     #
-    enable_pagination = str(os.getenv("PAGINATION_ENABLED", "True")) == "True"
-    pagination_limit = int(os.getenv("PAGINATION_LIMIT", 200))
     if enable_pagination:
         logger.info("Pagination is enabled")
         logger.info(f"Pagination limit is {pagination_limit}")

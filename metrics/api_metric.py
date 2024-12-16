@@ -84,7 +84,7 @@ class PrefectApiMetric:
             all_items.extend(curr_page_items)
 
             # If pagination is not used, break the loop
-            if not enable_pagination:
+            if not self.enable_pagination:
                 break
 
             offset += limit
