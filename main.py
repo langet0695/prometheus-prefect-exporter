@@ -56,6 +56,15 @@ def metrics():
         url=url, headers=headers, max_retries=max_retries, logger=logger
     ).get_health_check()
 
+    ##
+    # NOTIFY IF PAGINATION IS ENABLED
+    #
+    if enable_pagination:
+        logger.info("Pagination is enabled")
+        logger.info(f"Pagination limit is {pagination_limit}")
+    else:
+        logger.info("Pagination is disabled")
+
     # Create an instance of the PrefectMetrics class
     metrics = PrefectMetrics(
         url=url,

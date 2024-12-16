@@ -84,14 +84,6 @@ class PrefectMetrics(object):
             self.headers["Prefect-Csrf-Token"] = self.csrf_token
             self.headers["Prefect-Csrf-Client"] = self.client_id
 
-        ##
-        # NOTIFY IF PAGINATION IS ENABLED
-        #
-        if self.enable_pagination:
-            self.logger.info("Pagination is enabled")
-            self.logger.info(f"Pagination limit is {self.pagination_limit}")
-        else:
-            self.logger.info("Pagination is disabled")
 
         ##
         # Get Prefect resources based on required data sources
